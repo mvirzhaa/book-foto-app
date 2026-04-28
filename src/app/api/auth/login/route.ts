@@ -5,42 +5,39 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { nim, password } = body;
+    const { nim, password } = await req.json();
 
-    // 1. Cek apakah form diisi
     if (!nim || !password) {
       return NextResponse.json({ message: "NIM dan Password wajib diisi" }, { status: 400 });
     }
 
-    // 2. Cari mahasiswa berdasarkan NIM di database
-    const user = await prisma.user.findUnique({
-      where: { nim }
-    });
-
-    // Jika NIM tidak ditemukan
+    // 1. Cari user di database
+    const user = await prisma.user.findUnique({ where: { nim } });
     if (!user) {
-      return NextResponse.json({ message: "NIM tidak terdaftar" }, { status: 404 });
+      return NextResponse.json({ message: "Akun tidak ditemukan" }, { status: 404 });
     }
 
-    // 3. Cocokkan password yang diketik dengan password yang dienkripsi di database
+    // 2. Cocokkan password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
-      return NextResponse.json({ message: "Password salah!" }, { status: 401 });
+      return NextResponse.json({ message: "Password salah" }, { status: 401 });
     }
 
-    // 4. Jika sukses, kirim data mahasiswa (tanpa password)
+    // 3. Login sukses! Kembalikan data BESERTA ROLE-nya
     return NextResponse.json(
       { 
-        message: "Login sukses", 
-        user: { id: user.id, nim: user.nim, name: user.name, role: user.role } 
+        message: "Login berhasil", 
+        user: { 
+          id: user.id, 
+          nim: user.nim, 
+          name: user.name, 
+          role: user.role // <-- Ini kunci untuk RBAC kita!
+        } 
       }, 
       { status: 200 }
     );
-
   } catch (error) {
-    console.error("Error saat login:", error);
-    return NextResponse.json({ message: "Terjadi kesalahan pada server" }, { status: 500 });
+    console.error("Login error:", error);
+    return NextResponse.json({ message: "Terjadi kesalahan server" }, { status: 500 });
   }
 }

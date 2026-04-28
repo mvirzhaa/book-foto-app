@@ -3,14 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Perbarui interface agar sesuai dengan props baru yang dilempar dari parent
 interface RegisterFormProps {
   formData: any;
   isLoading: boolean;
+  masterData: { fakultas: any[]; angkatan: any[] };
+  availableProdi: any[];
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export default function RegisterForm({ formData, isLoading, handleChange, onSubmit }: RegisterFormProps) {
+export default function RegisterForm({ formData, isLoading, masterData, availableProdi, handleChange, onSubmit }: RegisterFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -26,34 +29,36 @@ export default function RegisterForm({ formData, isLoading, handleChange, onSubm
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* DROPDOWN FAKULTAS DINAMIS */}
         <div className="space-y-2">
           <Label htmlFor="fakultas" className="text-slate-700">Fakultas</Label>
           <select id="fakultas" name="fakultas" required className="w-full bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none h-11 rounded-xl px-3 text-sm appearance-none" value={formData.fakultas} onChange={handleChange}>
             <option value="" disabled>Pilih...</option>
-            <option value="Teknik">Teknik</option>
-            <option value="Ekonomi dan Bisnis">Ekonomi & Bisnis</option>
-            <option value="Ilmu Komputer">Ilmu Komputer</option>
+            {masterData.fakultas.map((fak) => (
+              <option key={fak.id} value={fak.nama}>{fak.nama}</option>
+            ))}
           </select>
         </div>
 
+        {/* DROPDOWN PRODI DINAMIS (CERDAS) */}
         <div className="space-y-2">
           <Label htmlFor="prodi" className="text-slate-700">Prodi</Label>
-          <select id="prodi" name="prodi" required className="w-full bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none h-11 rounded-xl px-3 text-sm appearance-none" value={formData.prodi} onChange={handleChange}>
-            <option value="" disabled>Pilih...</option>
-            <option value="Teknik Informatika">Teknik Informatika</option>
-            <option value="Sistem Informasi">Sistem Informasi</option>
-            <option value="Manajemen">Manajemen</option>
+          <select id="prodi" name="prodi" required disabled={!formData.fakultas} className="w-full bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none h-11 rounded-xl px-3 text-sm appearance-none disabled:opacity-50 disabled:cursor-not-allowed" value={formData.prodi} onChange={handleChange}>
+            <option value="" disabled>{formData.fakultas ? "Pilih Prodi..." : "Pilih Fakultas Dulu"}</option>
+            {availableProdi.map((prodi) => (
+              <option key={prodi.id} value={prodi.nama}>{prodi.nama}</option>
+            ))}
           </select>
         </div>
 
+        {/* DROPDOWN ANGKATAN DINAMIS */}
         <div className="space-y-2">
           <Label htmlFor="angkatan" className="text-slate-700">Angkatan</Label>
           <select id="angkatan" name="angkatan" required className="w-full bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none h-11 rounded-xl px-3 text-sm appearance-none" value={formData.angkatan} onChange={handleChange}>
             <option value="" disabled>Pilih...</option>
-            <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
+            {masterData.angkatan.map((angk) => (
+              <option key={angk.id} value={angk.tahun}>{angk.tahun}</option>
+            ))}
           </select>
         </div>
       </div>

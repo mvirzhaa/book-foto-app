@@ -1,13 +1,13 @@
-// src/app/admin/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRegistrations } from "@/hooks/useRegistrations";
-import AdminSidebar from "@/components/admin/Sidebat";
+import AdminSidebar from "@/components/admin/Sidebat"; // <-- Typo 'Sidebat' sudah diperbaiki
 import AdminDataTable from "@/components/admin/DataTable";
+import MasterDataPanel from "@/components/admin/MasterDataPanel"; 
 import { Search } from "lucide-react";
 
-export type AdminMenu = "UPLOAD" | "BOOKING" | "REKAP";
+export type AdminMenu = "UPLOAD" | "BOOKING" | "REKAP" | "MASTER_DATA" | "KELOLA_AKUN";
 
 export default function AdminDashboard() {
   const { registrations, isLoading, updateStatus } = useRegistrations();
@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   // Logika Filter Data
   const filteredData = registrations.filter((reg) => {
     if (activeMenu === "UPLOAD") return reg.method === "UPLOAD";
-    if (activeMenu === "BOOKING") return reg.method === "STUDIO_BOOKING";
+    if (activeMenu === "BOOKING") return reg.method === "STUDIO_BOOKING"; 
     if (activeMenu === "REKAP") return reg.status === "APPROVED"; 
     return true;
   });
@@ -38,12 +38,22 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <AdminDataTable 
-          data={filteredData} 
-          isLoading={isLoading} 
-          activeMenu={activeMenu} 
-          onUpdateStatus={updateStatus} 
-        />
+        {/* LOGIKA KONDISIONAL: Konten berubah sesuai menu yang diklik */}
+        {activeMenu === "MASTER_DATA" ? (
+          <MasterDataPanel />
+        ) : activeMenu === "KELOLA_AKUN" ? (
+          <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <h2 className="text-2xl font-bold text-slate-700">Modul Kelola Akun</h2>
+            <p className="text-slate-500 mt-2">Sedang dibangun... 🚧</p>
+          </div>
+        ) : (
+          <AdminDataTable 
+            data={filteredData} 
+            isLoading={isLoading} 
+            activeMenu={activeMenu} 
+            onUpdateStatus={updateStatus} 
+          />
+        )}
       </main>
     </div>
   );

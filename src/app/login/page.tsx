@@ -1,53 +1,18 @@
 // src/app/login/page.tsx
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Camera, Fingerprint, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import toast from "react-hot-toast";
+
+// 1. IMPORT CUSTOM HOOK KITA DI SINI
+import { useLogin } from "@/hooks/useLogin"; 
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    nim: "",
-    password: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success("Login Berhasil! Selamat datang, " + data.user.name);
-        // Nanti kita arahkan ke halaman dashboard
-        router.push("/dashboard"); 
-      } else {
-        toast.error(`Gagal: ${data.message}`);
-      }
-    } catch (error) {
-      toast.error("Terjadi kesalahan koneksi. Pastikan internet Anda lancar.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 2. PANGGIL SEMUA LOGIKA DARI HOOK (Bukan ditulis manual di sini)
+  const { formData, isLoading, handleChange, handleLogin } = useLogin();
 
   return (
     <div className="min-h-screen w-full flex font-sans bg-white">
@@ -103,13 +68,14 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 3. SAMBUNGKAN FORM DENGAN HOOK handleLogin */}
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="nim" className="text-slate-700">Nomor Induk Mahasiswa</Label>
+              <Label htmlFor="nim" className="text-slate-700">Nomor Induk / Username</Label>
               <Input 
                 id="nim" 
                 name="nim"
-                placeholder="2026xxxx" 
+                placeholder="NIM / admin" 
                 required 
                 className="bg-slate-50 border-slate-200 focus-visible:ring-blue-600 h-12 rounded-xl"
                 value={formData.nim}
@@ -120,7 +86,6 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password" className="text-slate-700">Password</Label>
-                {/* Opsi tambahan untuk masa depan: Lupa Password */}
                 <span className="text-sm text-blue-600 hover:underline cursor-pointer">Lupa password?</span>
               </div>
               <Input 

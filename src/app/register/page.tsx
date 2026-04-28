@@ -8,7 +8,7 @@ import RegisterForm from "@/components/auth/RegisterForm";
 
 export default function RegisterPage() {
   // Panggil logika dari custom hook
-  const { formData, isLoading, handleChange, handleRegister } = useRegister();
+  const { formData, isLoading, masterData, availableProdi, handleChange, handleRegister } = useRegister();
 
   return (
     <div className="min-h-screen w-full flex font-sans bg-white">
@@ -68,6 +68,8 @@ export default function RegisterPage() {
           <RegisterForm 
             formData={formData} 
             isLoading={isLoading} 
+            masterData={masterData}
+            availableProdi={availableProdi}
             handleChange={handleChange} 
             onSubmit={handleRegister} 
           />

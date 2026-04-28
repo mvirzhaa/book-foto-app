@@ -1,12 +1,37 @@
 // prisma/seed.ts
-import 'dotenv/config';
-import { prisma } from '../src/lib/prisma';
+import { prisma } from '../src/lib/prisma'; // Meminjam konfigurasi asli aplikasi Anda
+import bcrypt from 'bcryptjs';
 
 async function main() {
   console.log("🌱 Memulai proses seeding data master...");
 
-  // 1. Data Angkatan
+  // ==========================================
+  // 1. DATA AKUN ADMIN MASTER
+  // ==========================================
+  console.log("Memproses Akun Admin Master...");
+  const hashedAdminPassword = await bcrypt.hash("adminbppsi123", 10);
+  
+  await prisma.user.upsert({
+    where: { nim: "admin" },
+    update: { 
+      role: "ADMIN",                  // Memaksa ubah menjadi ADMIN jika sebelumnya STUDENT
+      password: hashedAdminPassword 
+    },
+    create: {
+      nim: "admin",
+      name: "Administrator BPPSI",
+      password: hashedAdminPassword,
+      role: "ADMIN",
+    },
+  });
+  console.log("✔️ Akun Admin Master berhasil disuntikkan.");
+
+  // ==========================================
+  // 2. DATA MASTER ANGKATAN
+  // ==========================================
+  console.log("Memproses Master Angkatan...");
   const angkatanList = ["2022", "2023", "2024", "2025", "2026"];
+  
   for (const tahun of angkatanList) {
     await prisma.angkatan.upsert({
       where: { tahun },
@@ -16,7 +41,10 @@ async function main() {
   }
   console.log("✔️ Master Angkatan berhasil disuntikkan.");
 
-  // 2. Data Fakultas & Prodi UIKA
+  // ==========================================
+  // 3. DATA MASTER FAKULTAS & PRODI UIKA
+  // ==========================================
+  console.log("Memproses Master Fakultas & Prodi...");
   const fakultasData = [
     {
       nama: "Fakultas Teknik (FT)",
@@ -44,7 +72,6 @@ async function main() {
     });
 
     for (const namaProdi of fak.prodi) {
-      // Cari prodi ini sudah ada atau belum di fakultas tersebut
       const existingProdi = await prisma.prodi.findFirst({
         where: { nama: namaProdi, fakultasId: fakultasRecord.id }
       });
@@ -60,7 +87,8 @@ async function main() {
     }
   }
   console.log("✔️ Master Fakultas & Prodi berhasil disuntikkan.");
-  console.log("✨ Seeding selesai!");
+  
+  console.log("✨ Seeding selesai seluruhnya! Sistem siap digunakan.");
 }
 
 main()

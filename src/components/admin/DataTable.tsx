@@ -1,129 +1,133 @@
 // src/components/admin/DataTable.tsx
-import { CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { FileDown, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Registration } from "@/types";
 import { AdminMenu } from "@/app/admin/page";
+import toast from "react-hot-toast";
+import * as XLSX from "xlsx"; // <-- Import library Excel yang baru diinstall
 
 interface DataTableProps {
-  data: Registration[];
+  data: any[];
   isLoading: boolean;
   activeMenu: AdminMenu;
-  onUpdateStatus: (id: string, status: string) => void;
+  onUpdateStatus: (id: string, newStatus: "APPROVED" | "REJECTED") => void;
 }
 
 export default function AdminDataTable({ data, isLoading, activeMenu, onUpdateStatus }: DataTableProps) {
   
-  // Fungsi pembantu untuk visualisasi status
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "APPROVED": 
-        return <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold flex items-center gap-1.5 w-max border border-green-200"><CheckCircle className="w-3.5 h-3.5"/> Disetujui</span>;
-      case "REJECTED": 
-        return <span className="px-3 py-1.5 bg-red-50 text-red-700 rounded-full text-xs font-bold flex items-center gap-1.5 w-max border border-red-200"><XCircle className="w-3.5 h-3.5"/> Ditolak</span>;
-      default: 
-        return <span className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full text-xs font-bold flex items-center gap-1.5 w-max border border-amber-200"><Clock className="w-3.5 h-3.5"/> Menunggu</span>;
+  // FUNGSI SAKTI EXPORT EXCEL
+  const handleExportExcel = () => {
+    if (data.length === 0) {
+      toast.error("Tidak ada data untuk diekspor!");
+      return;
+    }
+
+    const toastId = toast.loading("Menyiapkan file Excel...");
+
+    try {
+      // 1. Format ulang data agar rapi di Excel
+      const exportData = data.map((item, index) => ({
+        "No": index + 1,
+        "NIM": item.user?.nim || "-",
+        "Nama Mahasiswa": item.user?.name || "-",
+        "Fakultas": item.user?.fakultas || "-",
+        "Program Studi": item.user?.prodi || "-",
+        "Angkatan": item.user?.angkatan || "-",
+        "Layanan": item.method === "UPLOAD" ? "Unggah Mandiri" : "Booking Studio",
+        "Status": item.status,
+        "Tanggal Pengajuan": new Date(item.createdAt).toLocaleDateString("id-ID", {
+          day: '2-digit', month: 'long', year: 'numeric'
+        })
+      }));
+
+      // 2. Buat Worksheet & Workbook
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap BPPSI");
+
+      // 3. Picu unduhan file
+      XLSX.writeFile(workbook, `Rekap_Foto_BPPSI_${new Date().getTime()}.xlsx`);
+      
+      toast.success("File Excel berhasil diunduh!", { id: toastId });
+    } catch (error) {
+      toast.error("Gagal membuat file Excel.", { id: toastId });
     }
   };
 
+  if (isLoading) {
+    return <div className="p-12 text-center text-slate-400 animate-pulse font-medium">Memuat data mahasiswa...</div>;
+  }
+
   return (
     <div className="bg-white border border-slate-200/60 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+      
+      {/* HEADER TABEL */}
+      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <h2 className="font-bold text-lg text-slate-800">
+          {activeMenu === "UPLOAD" ? "Antrean Verifikasi Unggah Mandiri" : 
+           activeMenu === "BOOKING" ? "Jadwal Booking Studio" : 
+           "Rekapitulasi Data Disetujui"}
+        </h2>
+
+        {/* Tombol Export HANYA muncul di menu REKAP */}
+        {activeMenu === "REKAP" && (
+          <Button 
+            onClick={handleExportExcel}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2 font-semibold"
+          >
+            <FileDown className="w-4 h-4" /> Export Excel
+          </Button>
+        )}
+      </div>
+
+      {/* ISI TABEL */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-slate-50/50 border-b border-slate-200/80 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+        <table className="w-full text-left text-sm text-slate-600">
+          <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
             <tr>
-              <th className="px-6 py-5">Mahasiswa</th>
-              {activeMenu === "REKAP" && (
-                <>
-                  <th className="px-6 py-5">Fakultas / Prodi</th>
-                  <th className="px-6 py-5">Angkatan</th>
-                </>
-              )}
-              <th className="px-6 py-5">Layanan</th>
-              <th className="px-6 py-5">Metode / Jadwal</th>
-              {activeMenu !== "REKAP" && <th className="px-6 py-5">Status</th>}
-              {activeMenu !== "REKAP" && <th className="px-6 py-5 text-right">Aksi</th>}
+              <th className="px-6 py-4">Mahasiswa</th>
+              <th className="px-6 py-4">Program Studi</th>
+              <th className="px-6 py-4">Tanggal Pengajuan</th>
+              <th className="px-6 py-4">Status</th>
+              {activeMenu !== "REKAP" && <th className="px-6 py-4 text-center">Aksi</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
+            {data.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium animate-pulse">Memuat data...</td>
-              </tr>
-            ) : data.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">Tidak ada data di kategori ini.</td>
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-400">Belum ada data di kategori ini.</td>
               </tr>
             ) : (
-              data.map((reg) => (
-                <tr key={reg.id} className="hover:bg-slate-50/50 transition-colors duration-200">
-                  
-                  {/* Kolom Profil */}
+              data.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-bold text-slate-900 text-base">{reg.user.name}</div>
-                    <div className="text-slate-500 text-xs mt-1 font-medium">{reg.user.nim}</div>
+                    <div className="font-bold text-slate-800">{item.user?.name || "Tanpa Nama"}</div>
+                    <div className="text-xs text-slate-500">{item.user?.nim || "-"}</div>
                   </td>
-
-                  {/* Kolom Akademik (Hanya Tab Rekap) */}
-                  {activeMenu === "REKAP" && (
-                    <>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-700">{reg.user.fakultas || <span className="text-slate-300 italic font-normal">Belum diisi</span>}</div>
-                        <div className="text-slate-500 text-xs mt-1">{reg.user.prodi || <span className="text-slate-300 italic">-</span>}</div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 font-semibold">
-                        {reg.user.angkatan || <span className="text-slate-300 italic font-normal">Belum diisi</span>}
-                      </td>
-                    </>
-                  )}
-
-                  <td className="px-6 py-4 font-semibold text-slate-700">Foto {reg.type}</td>
-                  
                   <td className="px-6 py-4">
-                    {reg.method === "UPLOAD" ? (
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-blue-600 font-bold text-xs bg-blue-50 px-2 py-1 rounded-md w-max">Unggah Mandiri</span>
-                        {reg.photoUrl && (
-                          <a href={reg.photoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors">
-                            <Eye className="w-3.5 h-3.5 mr-1" /> Lihat Foto
-                          </a>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-indigo-600 font-bold text-xs bg-indigo-50 px-2 py-1 rounded-md w-max">Studio Kampus</span>
-                        <span className="text-slate-600 text-xs font-medium">
-                          {reg.bookingDate ? new Date(reg.bookingDate).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : "-"} WIB
-                        </span>
-                      </div>
-                    )}
+                    <div className="font-medium text-slate-700">{item.user?.prodi || "-"}</div>
+                    <div className="text-xs text-slate-500">{item.user?.fakultas || "-"} ({item.user?.angkatan || "-"})</div>
                   </td>
-
-                  {/* Kolom Status & Aksi */}
+                  <td className="px-6 py-4 text-slate-500">
+                    {new Date(item.createdAt).toLocaleDateString("id-ID")}
+                  </td>
+                  <td className="px-6 py-4">
+                    {item.status === "PENDING" && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="w-3.5 h-3.5"/> Menunggu</span>}
+                    {item.status === "APPROVED" && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200"><CheckCircle className="w-3.5 h-3.5"/> Disetujui</span>}
+                    {item.status === "REJECTED" && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200"><XCircle className="w-3.5 h-3.5"/> Ditolak</span>}
+                  </td>
+                  
+                  {/* Tombol Aksi (Hanya muncul jika bukan menu Rekap) */}
                   {activeMenu !== "REKAP" && (
-                    <>
-                      <td className="px-6 py-4">{getStatusBadge(reg.status)}</td>
-                      <td className="px-6 py-4 text-right">
-                        {reg.status === "PENDING" && (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => onUpdateStatus(reg.id, "APPROVED")} 
-                              className="bg-green-600 hover:bg-green-700 text-white h-9 text-xs rounded-xl font-semibold shadow-sm transition-transform hover:-translate-y-0.5"
-                            >
-                              Setujui
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => onUpdateStatus(reg.id, "REJECTED")} 
-                              className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 h-9 text-xs rounded-xl font-semibold transition-transform hover:-translate-y-0.5"
-                            >
-                              Tolak
-                            </Button>
-                          </div>
-                        )}
-                      </td>
-                    </>
+                    <td className="px-6 py-4 text-center">
+                      {item.status === "PENDING" ? (
+                        <div className="flex justify-center gap-2">
+                          <Button onClick={() => onUpdateStatus(item.id, "APPROVED")} size="sm" className="bg-emerald-100 hover:bg-emerald-600 text-emerald-700 hover:text-white rounded-lg h-8 px-3 text-xs transition-colors">Setuju</Button>
+                          <Button onClick={() => onUpdateStatus(item.id, "REJECTED")} size="sm" className="bg-red-100 hover:bg-red-600 text-red-700 hover:text-white rounded-lg h-8 px-3 text-xs transition-colors">Tolak</Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">Sudah diproses</span>
+                      )}
+                    </td>
                   )}
                 </tr>
               ))
