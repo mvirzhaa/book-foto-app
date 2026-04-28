@@ -1,17 +1,21 @@
 // prisma/schema.prisma
 
-datasource db {
-  provider = "postgresql"
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"] // Ini wajib ada karena kita pakai adapter
 }
 
-generator client {
-  provider = "prisma-client-js"
+datasource db {
+  provider = "postgresql"
 }
 
 model User {
   id            String         @id @default(uuid())
   nim           String         @unique
   name          String
+  prodi         String?        // <-- Kolom baru (opsional)
+  fakultas      String?        // <-- Kolom baru (opsional)
+  angkatan      String?        // <-- Kolom baru (opsional)
   password      String
   role          Role           @default(STUDENT)
   registrations Registration[]

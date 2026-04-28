@@ -1,0 +1,19 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bppsi_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin_bppsi
+      POSTGRES_PASSWORD: password_rahasia_123
+      POSTGRES_DB: bppsi_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - bppsi_pgdata:/var/lib/postgresql/data
+
+volumes:
+  bppsi_pgdata:
