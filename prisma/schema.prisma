@@ -57,3 +57,23 @@ enum Status {
   APPROVED
   REJECTED
 }
+
+// Tambahkan di bagian bawah prisma/schema.prisma
+
+model Fakultas {
+  id    String  @id @default(uuid())
+  nama  String  @unique
+  prodi Prodi[] // Relasi: Satu Fakultas punya banyak Prodi
+}
+
+model Prodi {
+  id         String   @id @default(uuid())
+  nama       String
+  fakultasId String
+  fakultas   Fakultas @relation(fields: [fakultasId], references: [id], onDelete: Cascade)
+}
+
+model Angkatan {
+  id    String @id @default(uuid())
+  tahun String @unique
+}
