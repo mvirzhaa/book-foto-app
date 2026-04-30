@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRegistrations } from "@/hooks/useRegistrations";
-import AdminSidebar from "@/components/admin/Sidebat"; // <-- Typo 'Sidebat' sudah diperbaiki
+import AdminSidebar from "@/components/admin/Sidebat";
 import AdminDataTable from "@/components/admin/DataTable";
-import MasterDataPanel from "@/components/admin/MasterDataPanel"; 
+import MasterDataPanel from "@/components/admin/MasterDataPanel";
+import UserManagementPanel from "@/components/admin/UserManagementPanel";
 import { Search } from "lucide-react";
 
 export type AdminMenu = "UPLOAD" | "BOOKING" | "REKAP" | "MASTER_DATA" | "KELOLA_AKUN";
@@ -38,14 +39,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* LOGIKA KONDISIONAL: Konten berubah sesuai menu yang diklik */}
+{/* LOGIKA KONDISIONAL: Konten berubah sesuai menu yang diklik */}
         {activeMenu === "MASTER_DATA" ? (
           <MasterDataPanel />
         ) : activeMenu === "KELOLA_AKUN" ? (
-          <div className="bg-white p-12 text-center rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <h2 className="text-2xl font-bold text-slate-700">Modul Kelola Akun</h2>
-            <p className="text-slate-500 mt-2">Sedang dibangun... 🚧</p>
-          </div>
+          <UserManagementPanel />   
         ) : (
           <AdminDataTable 
             data={filteredData} 

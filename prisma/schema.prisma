@@ -30,8 +30,10 @@ model Registration {
   type             PhotoType
   method           SubmissionMethod
   photoUrl         String?
-  bookingDate      DateTime?
   status           Status           @default(PENDING)
+  fileUrl          String? 
+  bookingDate      DateTime?  
+  bookingTime      String? 
   adminNotes       String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
